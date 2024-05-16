@@ -1,0 +1,376 @@
+package application;
+
+
+public class User 
+{
+    private int userID = 0;
+    private String username;
+    private String email;
+    private String password;
+    private String bio;
+    
+    public User()
+    {
+        
+    }
+    
+    public User(String username, String password, String email) {
+        this.username = username;
+        this.password = password;
+        this.email = email;
+        userID = userID + 1;
+            }
+    
+    
+    
+    public User(int userID, String email, String password) {
+        this.userID = userID;
+        this.email = email;
+        this.password = password;
+    }
+    
+    public void setbio(String bio) {
+        this.bio = bio;
+    }
+    public String getbio () {
+        return bio;
+    }
+    
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public int getUserID() {
+        return userID;
+    }
+
+    public void setUserID(int userID) {
+        this.userID = userID;
+    }
+    
+
+        // Method to convert user object to comma-separated string
+    public String toCSVString() {
+        return  username + ",,," + email + ",,," + password + ",,," ;
+    }
+
+
+}
+
+public class Post 
+{
+    private String postAuthorName; //same as username
+    private final LocalDate postCreationDate;
+    private final LocalTime postCreationTime;
+    private String postContent;
+    private boolean like = false ;
+    private int postID = 0;
+
+       public int getPostID() {
+		return postID;
+	}
+
+	public void setPostID(int postID) {
+		this.postID = postID;
+	}
+
+	public Post(String postAuthorName, LocalDate postCreationDate, LocalTime postCreationTime, String postContent) {
+        this.postAuthorName = postAuthorName;
+        this.postCreationDate = postCreationDate;
+        this.postCreationTime = postCreationTime;
+        this.postContent = postContent;
+        this.postID = postID + 1;
+    }
+
+    // Getter and setter methods for postContent
+    public String getPostContent() {
+        return postContent;
+    }
+
+    public boolean isLike() {
+		return like;
+	}
+
+	public void setLike(boolean like) {
+		this.like = like;
+	}
+
+	public void setPostContent(String postContent) {
+        this.postContent = postContent;
+    }
+
+    // Getter method for dateCreated
+    public LocalDate getpostCreationDate() {
+        return postCreationDate;
+    }
+    
+    public LocalTime getpostCreationTime() {
+        return postCreationTime;
+    }
+
+        // Method to convert user object to comma-separated string
+    public String toCSVString() {
+        return postAuthorName + ",,," + postCreationDate + ",,," + postCreationTime + ",,," + postContent + ",,," + postID;
+    }
+    
+}
+package application;
+import java.util.ArrayList;
+import java.util.List;
+
+public class UserManager extends User  {
+    private static String loggedInUsername;
+    private List<User> users = (List<User>) FileCRUD.readUsersFile();
+
+    public UserManager() {
+        this.users = new ArrayList<>();
+    }
+
+   // Method to register a new user
+public void registerUser(int userID, String username, String email, String password, String bio) {
+    // Check if username or email already exists
+    for (User user : users) {
+        if (user.getUsername().equals(username)) {
+            System.out.println("Username " + username + " is already taken. Please choose a different one.");
+            return; // Exit the method without registering the user
+        }
+        if (user.getEmail().equals(email)) {
+            System.out.println("Email " + email + " is already registered. Please use a different email.");
+            return; // Exit the method without registering the user
+        }
+    }
+    // If username and email are unique, register the user
+    User newUser = new User(username, email, password);
+    FileCRUD.addUser(newUser);
+}
+
+
+
+
+    // Method to check if a user with a given username and password exists
+public boolean loginUser(String username, String password) {
+        for (User user : users) {
+            if (user.getUsername().equals(username) && user.getPassword().equals(password)) {
+                System.out.println("User " + username + " logged in successfully!");
+                loggedInUsername = username;
+                return true;
+            }
+        }
+        System.out.println("Login failed. Invalid username or password.");
+        return false;
+    }
+
+    public static String getLoggedInUsername() {
+        return loggedInUsername;
+    }
+
+    public void setLoggedInUsername(String loggedInUsername) {
+        this.loggedInUsername = loggedInUsername;
+    }
+
+
+
+}
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class FileCRUD {
+
+    // Method to add a User to the users.txt file
+    public static void addUser(User user) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt", true))) {
+            writer.write(user.toCSVString());
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to add a Post to the posts.txt file
+    public static void addPost(Post post) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("posts.txt", true))) {
+            writer.write(post.toCSVString());
+            writer.newLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Method to read Users from the users.txt file and store them in a List
+    public static Map<String, String[]> readUsersFile() {
+        Map<String, String[]> usersMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader("users.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    String[] userDetails = line.split(",,,");
+                    usersMap.put(userDetails[1], new String[]{userDetails[0], userDetails[2], userDetails[3]});
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return usersMap;
+    }
+
+    // Method to read Posts from the posts.txt file and store them in a List
+    public static List<Post> readPostsFile() {
+        List<Post> posts = new ArrayList<>();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader("posts.txt"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) { // Skip empty lines
+                    String[] postDetails = line.split(",,,");
+                    Post post = new Post(postDetails[1], LocalDate.parse(postDetails[2]), LocalTime.parse(postDetails[3]), postDetails[4]);
+                    post.setPostID(Integer.parseInt(postDetails[0]));
+                    post.setLike(Boolean.parseBoolean(postDetails[5]));
+                    posts.add(post);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return posts;
+    }
+    // New method to get the next available user ID
+    public static int getNewUserID() {
+        List<User> users = (List<User>) readUsersFile();
+        return users.stream().mapToInt(User::getUserID).max().orElse(0) + 1;
+    }
+
+    // New method to read Users from the users.txt file and return a Map
+    public static Map<String, String[]> readUsersFile(String filePath) {
+        Map<String, String[]> usersMap = new HashMap<>();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    String[] userDetails = line.split(",,,");
+                    usersMap.put(userDetails[1], new String[]{userDetails[0], userDetails[3], userDetails[4]});
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return usersMap;
+    }
+import java.util.Map;
+
+import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+public class Main extends Application {
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Image view setup
+        ImageView imageView = new ImageView();
+        imageView.setImage(new Image("file:///C:/Users/akele/eclipse-workspace1/Project/Images/Screenshot%202024-05-15%20213145.png"));
+        imageView.setFitHeight(60); // Set the height to match the image size
+        imageView.setFitWidth(261); // Set the width to match the image size
+        imageView.setPreserveRatio(true);
+
+        // Text fields for user input
+        TextField usernameField = new TextField();
+        usernameField.setPromptText("Username");
+        TextField emailField = new TextField();
+        emailField.setPromptText("Email");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Password");
+
+        // Buttons for login and register
+        Button loginButton = new Button("Login");
+        Button registerButton = new Button("Register");
+
+        // Layout for buttons
+        HBox buttonLayout = new HBox(10, loginButton, registerButton);
+        buttonLayout.setAlignment(Pos.CENTER);
+
+        // Main layout
+        VBox layout = new VBox(10, imageView, usernameField, emailField, passwordField, buttonLayout);
+        layout.setAlignment(Pos.CENTER);
+        layout.setPadding(new Insets(20));
+
+        // Scene and stage setup
+        Scene scene = new Scene(layout, 400, 400);
+        primaryStage.setTitle("ASU Social");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+
+        // Register button action
+        registerButton.setOnAction(e -> {
+            UserManager userManager = new UserManager();
+            int newUserID = FileCRUD.getNewUserID();
+            userManager.registerUser(newUserID, usernameField.getText(), emailField.getText(), passwordField.getText(), "");
+        });
+
+        // Login button action
+        loginButton.setOnAction(e -> {
+            Map<String, String[]> users = FileCRUD.readUsersFile();
+            String username = usernameField.getText();
+            String password = passwordField.getText();
+            if (users.containsKey(username) && users.get(username)[1].equals(password)) {
+                // Login successful, switch to an empty scene
+                primaryStage.setScene(new Scene(new StackPane(), 400, 400));
+            } else {
+                // Login failed, show error message
+                Alert alert = new Alert(Alert.AlertType.ERROR, "Invalid username or password.");
+                alert.showAndWait();
+            }
+        });
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+} 
+look I am trying to create a mock social media app. now i want you to update the above code to do these things. fist main has to be updated so that labels username email and password are added to textboxes in that order. second the main has to be updated so that when register is clicked it creates a new user and adds that and its info to a file using the existing classes and their method. it then takes you to a user scene where user name is displayed aswell as a "post " textfield and button that once clicked will create a new post object. when log in is clicked it checks the file for to see if an object with the corresponding username exists. it then cheks that the password is correct. if it doesnt exist or the password is wrong the it dispalys an error message. finally the user scene will have a button called see posts. that button will take you to a new scene that shows all the posts(by using functions in the other classes) each displayed with appropriate info, this scene shall also have a button to return to user scene. everything should be elegant and neat and preserves the existing code as much as possible.
+
+Exception in Application constructor
+java.lang.reflect.InvocationTargetException.
+I get this error plz update the code to fix it
